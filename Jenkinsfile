@@ -22,38 +22,45 @@ pipeline {
             }
         }
 */
-        stage('Test'){
-             agent {
-                docker{
-                    image 'node:18-alpine'
-                    reuseNode true
+        stage('Run tests'){
+            parallel{
+                 stage('Test'){
+                    agent {
+                        docker{
+                            image 'node:18-alpine'
+                            reuseNode true
+                        }
+                    } 
+                    steps{
+                        sh '''
+                            test -f build/index.html
+                            npm run test
+                        '''
+                    }
                 }
-            } 
-            steps{
-                sh '''
-                    test -f build/index.html
-                    npm run test
-                '''
-            }
-        }
 
-         stage('E2E'){
-            agent{
-                docker{
-                   image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
-                   reuseNode true
-                  // args '-u root:root'
+                 stage('E2E'){
+                    agent{
+                        docker{
+                        image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                        reuseNode true
+                        // args '-u root:root'
+                        }
+                    }
+                    steps{
+                        sh '''
+                        npm install  serve 
+                        node_modules/.bin/serve -s build & 
+                        sleep 10
+                        npx playwright test --reporter=html
+                        '''
+                    }
                 }
             }
-            steps{
-                sh '''
-                   npm install  serve 
-                   node_modules/.bin/serve -s build & 
-                   sleep 10
-                   npx playwright test --reporter=html
-                '''
-            }
         }
+       
+
+        
     }
 
     post{
