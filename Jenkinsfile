@@ -70,7 +70,7 @@ pipeline {
                     post{
                         always{
                             junit 'jest-results/junit.xml'
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright Local Report', reportTitles: '', useWrapperFileDirectly: true])
                         }
                     }
                 }
@@ -95,6 +95,32 @@ pipeline {
                '''
             }
         }
-       
+
+        stage('Prod E2E'){
+            agent{
+                docker{
+                image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                reuseNode true
+                // args '-u root:root'
+                }
+            }
+
+            environment{
+                CI_ENVIRONMENT_URL = 'https://heartfelt-granita-1c0fa4.netlify.app'
+            }
+
+            steps{
+                sh '''
+                npx playwright test --reporter=html
+                '''
+            }
+            post{
+                always{
+                    junit 'jest-results/junit.xml'
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright Prod Report', reportTitles: '', useWrapperFileDirectly: true])
+                }
+            }
+        }
+
     }
 }
