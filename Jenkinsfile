@@ -2,67 +2,66 @@ pipeline {
     agent any
 
     stages {
-
-        stage('Cleanup') {
-            steps {
-                cleanWs()
-            }
-        }
+        /*
 
         stage('Build') {
             agent {
                 docker {
                     image 'node:18-alpine'
-                    args '-u root'
+                    reuseNode true
                 }
             }
             steps {
                 sh '''
+                    ls -la
                     node --version
                     npm --version
-                    rm -rf node_modules
                     npm ci
                     npm run build
-                    test -f build/index.html
+                    ls -la
                 '''
             }
         }
+        */
 
         stage('Test') {
             agent {
                 docker {
                     image 'node:18-alpine'
-                    args '-u root'
+                    reuseNode true
                 }
             }
+
             steps {
-                sh 'npm test'
+                sh '''
+                    #test -f build/index.html
+                    npm test
+                '''
             }
         }
 
         stage('E2E') {
             agent {
                 docker {
-                    image 'mcr.microsoft.com/playwright:v1.58.0-noble'
-                    args '-u root'
+                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                    reuseNode true
                 }
             }
+
             steps {
                 sh '''
-                    npm install -g serve
-                    serve -s build -l 3000 &
-                    SERVER_PID=$!
-                    sleep 5
+                    npm install serve
+                    node_modules/.bin/serve -s build &
+                    sleep 10
                     npx playwright test
-                    kill $SERVER_PID
                 '''
             }
         }
     }
 
-    // post {
-    //     always {
-    //         junit 'jest-results/junit.xml'
-    //     }
-    // }
+    post {
+        always {
+            junit 'jest-results/junit.xml'
+        }
+    }
 }
