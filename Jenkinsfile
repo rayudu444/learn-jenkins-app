@@ -60,15 +60,9 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            script {
-                if (fileExists('jest-results/junit.xml')) {
-                    junit 'jest-results/junit.xml'
-                } else {
-                    echo 'JUnit report not found, skipping'
-                }
-            }
-        }
-    }
+    // post {
+    //     always {
+    //         junit 'jest-results/junit.xml'
+    //     }
+    // }
 }
